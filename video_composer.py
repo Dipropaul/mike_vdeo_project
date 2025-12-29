@@ -298,8 +298,8 @@ class VideoComposer:
                 chunk_words = words[i:i + words_per_chunk]
                 text = ' '.join(chunk_words)
                 
-                # Wrap text if too long
-                wrapped_text = '\\n'.join(textwrap.wrap(text, width=30))
+                # Wrap text if too long (use proper newline character)
+                wrapped_text = '\n'.join(textwrap.wrap(text, width=35))
                 
                 # Calculate timing
                 start_time = (i / words_per_chunk) * chunk_duration
@@ -307,18 +307,28 @@ class VideoComposer:
                 
                 # Create text clip with styling for social media
                 try:
+                    # Calculate font size based on video dimensions (smaller for better fit)
+                    font_size = int(height * 0.045)  # 4.5% of video height
+                    
                     txt_clip = TextClip(
                         text=wrapped_text,
-                        font_size=int(height * 0.05),  # 5% of video height
+                        font_size=font_size,
                         color='white',
                         stroke_color='black',
-                        stroke_width=2,
+                        stroke_width=3,
                         method='caption',
-                        size=(int(width * 0.9), None)  # 90% of video width
+                        size=(int(width * 0.85), None)  # 85% of video width for margins
                     ).with_start(start_time).with_duration(end_time - start_time)
                     
-                    # Position at bottom center (or top for 9:16)
-                    position = ('center', int(height * 0.75))  # 75% down
+                    # Position at bottom with safe margin to prevent cutoff
+                    # For 9:16 vertical videos, position slightly higher
+                    # For 16:9 horizontal videos, keep at bottom
+                    if height > width:  # Vertical video (9:16)
+                        y_position = int(height * 0.70)  # 70% down
+                    else:  # Horizontal or square video
+                        y_position = int(height * 0.80)  # 80% down
+                    
+                    position = ('center', y_position)
                     txt_clip = txt_clip.with_position(position)
                     
                     subtitle_clips.append(txt_clip)

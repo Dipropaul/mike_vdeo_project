@@ -49,15 +49,21 @@ class NarrationGenerator:
     
     def _generate_with_elevenlabs(self, script: str, voice_name: str) -> Path:
         """Generate narration using ElevenLabs"""
-        # Get voice ID
-        voice_id = self.voices.get(voice_name, self.voices['Bella'])
+        # Get voice ID - use default if voice not found
+        if voice_name not in self.voices:
+            print(f"Voice '{voice_name}' not found, using default 'Zara'")
+            voice_name = 'Zara'
+        
+        voice_id = self.voices[voice_name]
         
         # Generate audio
-        print(f"Generating narration with ElevenLabs ({voice_name} voice)...")
-        audio = self.elevenlabs_client.generate(
+        print(f"Generating narration with ElevenLabs ({voice_name} voice, ID: {voice_id})...")
+        
+        # Use the correct ElevenLabs API method with turbo v2.5 for better quality
+        audio = self.elevenlabs_client.text_to_speech.convert(
+            voice_id=voice_id,
             text=script,
-            voice=voice_id,
-            model="eleven_monolingual_v1"
+            model_id="eleven_turbo_v2_5"
         )
         
         # Save audio file
@@ -73,13 +79,14 @@ class NarrationGenerator:
     
     def _generate_with_openai(self, script: str, voice_name: str) -> Path:
         """Generate narration using OpenAI TTS as fallback"""
-        # Map voice names to OpenAI voices
+        # Map voice names to OpenAI voices (6 available: alloy, echo, fable, onyx, nova, shimmer)
         openai_voices = {
-            'Bella': 'nova',
-            'Rachel': 'shimmer',
-            'Josh': 'onyx',
-            'Antoni': 'echo',
-            'Elli': 'alloy'
+            'Zara': 'nova',
+            'Shelby': 'shimmer',
+            'James': 'onyx',
+            'B.Giffen': 'fable',
+            'Adam': 'echo',
+            'Lulu Lollipop': 'alloy'
         }
         
         openai_voice = openai_voices.get(voice_name, 'nova')

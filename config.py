@@ -16,6 +16,7 @@ BASE_DIR = Path(__file__).parent
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
 ELEVENLABS_API_KEY = os.getenv('ELEVENLABS_API_KEY', '')
 STABILITY_API_KEY = os.getenv('STABILITY_API_KEY', '')
+GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY', '')
 
 # Flask Configuration
 SECRET_KEY = os.getenv('FLASK_SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -57,14 +58,30 @@ VIDEO_STYLES = [
     'Caricature'
 ]
 
-# Voice Types (ElevenLabs voices)
+# Voice Types (ElevenLabs voices - from API)
 VOICE_TYPES = {
-    'Zara': 'XB0fDUnXU5powFXDhCwa',      # The Warm, Real-World (Social Media)
-    'Shelby': 'EXAVITQu4vr4xnSDxMaL',    # Conversational
-    'James': 'ZQe5CZNOzWyzPSCn5a3c',     # British Professional (Informative & Educational)
-    'B.Giffen': 'N2lVS1w4EtoT3dr4eOWO',  # Audiobook Narrator (Narrative & Story)
-    'Adam': 'pNInz6obpgDQGcFmaJgB',      # Conversational
-    'Lulu Lollipop': 'EXAVITQu4vr4xnSDxMaL'  # Sweet & Bubbly (Engaging & Animated)
+    'Roger': 'CwhRBWXzGAHq8TQ4Fs17',      # Laid-Back, Casual, Resonant (Male)
+    'Sarah': 'EXAVITQu4vr4xnSDxMaL',      # Mature, Reassuring, Confident (Female)
+    'Shelby': 'EXAVITQu4vr4xnSDxMaL',     # Alias for Sarah (Conversational)
+    'Laura': 'FGY2WhTYpPnrIDTdsKH5',      # Enthusiast, Quirky Attitude (Female)
+    'Charlie': 'IKne3meq5aSn9XLyUdCD',    # Deep, Confident, Energetic (Male)
+    'George': 'JBFqnCBsd6RMkjVDRZzb',     # Warm, Captivating Storyteller (Male)
+    'James': 'JBFqnCBsd6RMkjVDRZzb',      # Alias for George (British Professional)
+    'Callum': 'N2lVS1w4EtoT3dr4eOWO',     # Husky Trickster (Male)
+    'B.Giffen': 'N2lVS1w4EtoT3dr4eOWO',   # Alias for Callum (Audiobook Narrator)
+    'River': 'SAz9YHcvj6GT2YYXdXww',      # Relaxed, Neutral, Informative (Neutral)
+    'Liam': 'TX3LPaxmHKxFdv7VOQHJ',       # Energetic, Social Media Creator (Male)
+    'Alice': 'Xb7hH8MSUJpSbSDYk0k2',      # Clear, Engaging Educator (Female)
+    'Matilda': 'XrExE9yKIg1WjnnlVkGX',    # Knowledgable, Professional (Female)
+    'Jessica': 'cgSgspJ2msm6clMCkdW9',    # Playful, Bright, Warm (Female)
+    'Lulu Lollipop': 'cgSgspJ2msm6clMCkdW9',  # Alias for Jessica (Sweet & Bubbly)
+    'Eric': 'cjVigY5qzO86Huf0OWal',       # Smooth, Trustworthy (Male)
+    'Chris': 'iP95p4xoKVk53GoZ742B',      # Charming, Down-to-Earth (Male)
+    'Brian': 'nPczCjzI2devNBz1zQrb',      # Deep, Resonant and Comforting (Male)
+    'Daniel': 'onwK4e9ZLuTAKqWW03F9',     # Steady Broadcaster (Male)
+    'Lily': 'pFZP5JQG7iQjIQuC4Bku',       # Velvety Actress (Female)
+    'Adam': 'pNInz6obpgDQGcFmaJgB',       # Dominant, Firm (Male)
+    'Bill': 'pqHfZKP75CvOlQylNhV4'        # Wise, Mature, Balanced (Male)
 }
 
 # Create directories
