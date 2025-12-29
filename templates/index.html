@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClipForge - Create New Video</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" fill="#E91E63"/>
+                <path d="M9 8L15 12L9 16V8Z" fill="white"/>
+            </svg>
+            <span>ClipForge</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/" class="nav-item">
+                <span>🏠</span> Home
+            </a>
+            <a href="/" class="nav-item active">
+                <span>📹</span> Create Video
+            </a>
+            <a href="/videos" class="nav-item">
+                <span>📁</span> All Videos
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Create New Video</h1>
+            <div class="user-icon">M</div>
+        </div>
+
+        <div class="create-video-container">
+            <div class="intro-text">
+                <h2>Let's get started on your new video!</h2>
+                <p>Name your video, select from the options below, and paste in your script. Then hit "Create Video" and your video will be fully completed. You can find your video in the "All Videos" list when it's completed. Videos may take 5-10 minutes to compile. Generate as many videos as you need while your videos are processing. (up to 1500 characters)</p>
+            </div>
+
+            <form id="videoForm" class="video-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="title">Video Title:</label>
+                        <input type="text" id="title" name="title" required placeholder="Youtube Money Sharing">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">Video Category:</label>
+                        <input type="text" id="category" name="category" required placeholder="History Channel Videos">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Video Format:</label>
+                    <div class="format-options">
+                        {% for format in video_formats %}
+                        <div class="format-box">
+                            <input type="radio" id="format_{{ format }}" name="format" value="{{ format }}" {% if loop.first %}checked{% endif %}>
+                            <label for="format_{{ format }}">{{ format }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Video Style:</label>
+                    <div class="style-grid">
+                        {% for style in video_styles %}
+                        <div class="style-card">
+                            <input type="radio" id="style_{{ loop.index }}" name="style" value="{{ style }}" {% if loop.first %}checked{% endif %}>
+                            <label for="style_{{ loop.index }}">
+                                <div class="style-image"></div>
+                                <span>{{ style }}</span>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Voice Type:</label>
+                    <div class="voice-grid">
+                        {% for voice in voice_types %}
+                        <div class="voice-card">
+                            <input type="radio" id="voice_{{ voice }}" name="voice" value="{{ voice }}" {% if loop.first %}checked{% endif %}>
+                            <label for="voice_{{ voice }}">
+                                <div class="voice-icon">🎤</div>
+                                <div class="voice-info">
+                                    <strong>{{ voice }}</strong>
+                                    <small>AI Voice</small>
+                                </div>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="keywords">Keywords (comma-separated):</label>
+                        <input type="text" id="keywords" name="keywords" placeholder="e.g., vibrant, cinematic, detailed, 4k">
+                        <small class="field-hint">Add keywords to enhance image generation</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="negative_keywords">Negative Keywords (comma-separated):</label>
+                        <input type="text" id="negative_keywords" name="negative_keywords" placeholder="e.g., blurry, low quality, text, watermark">
+                        <small class="field-hint">Specify what to avoid in images</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="script">Script:</label>
+                    <textarea id="script" name="script" required placeholder="Copy / Paste Script&#10;(1500 max characters)" maxlength="1500"></textarea>
+                    <div class="char-counter">
+                        <span id="charCount">0</span> / 1500 characters
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-create" id="createBtn">
+                    CREATE NEW VIDEO
+                </button>
+            </form>
+
+            <div id="statusMessage" class="status-message" style="display: none;">
+                <div class="spinner"></div>
+                <p id="statusText">Generating video...</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

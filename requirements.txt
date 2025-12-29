@@ -1,0 +1,33 @@
+# Web Framework
+fastapi
+uvicorn[standard]
+python-multipart
+jinja2
+
+# Environment Variables
+python-dotenv
+
+# AI APIs
+openai
+elevenlabs
+google-genai
+
+# Image Processing
+Pillow
+
+# Video Processing
+moviepy
+numpy
+
+# Audio Processing
+pydub
+
+# HTTP Requests
+requests
+
+# Data Processing
+pydantic
+
+# Utilities
+tqdm
+python-slugify
