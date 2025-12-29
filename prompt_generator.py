@@ -13,7 +13,25 @@ class ImagePromptGenerator:
     def __init__(self):
         """Initialize the prompt generator"""
         self.client = OpenAI(api_key=config.OPENAI_API_KEY) if config.OPENAI_API_KEY else None
-        self.image_count = config.IMAGE_COUNT
+    
+    def _calculate_image_count(self, script: str) -> int:
+        """Calculate optimal number of images based on script length"""
+        word_count = len(script.split())
+        
+        # Calculate based on script length:
+        # Short (0-100 words): 3-5 images
+        # Medium (100-300 words): 5-7 images
+        # Long (300-500 words): 7-10 images
+        # Very long (500+ words): 10-12 images
+        
+        if word_count < 100:
+            return max(3, min(5, word_count // 20 + 2))
+        elif word_count < 300:
+            return max(5, min(7, word_count // 40 + 3))
+        elif word_count < 500:
+            return max(7, min(10, word_count // 50 + 4))
+        else:
+            return max(10, min(12, word_count // 60 + 5))
     
     def generate_prompts(self, script: str, style: str = 'Modern Abstract', 
                         keywords: str = '', negative_keywords: str = '') -> List[Dict[str, str]]:
@@ -30,12 +48,23 @@ class ImagePromptGenerator:
             List of dictionaries containing prompts and negative prompts
         """
         try:
-            # Create the system prompt
-            negative_prompt_base = negative_keywords if negative_keywords else "blurry, low quality, distorted, text, watermark"
+            # Calculate dynamic image count based on script length
+            image_count = self._calculate_image_count(script)
+            print(f"Script has {len(script.split())} words, generating {image_count} images")
+            
+            # Create comprehensive negative prompt that excludes text
+            text_exclusions = "text, letters, words, writing, typography, captions, subtitles, labels, signs, banners, written language, alphabet, numbers, symbols"
+            quality_exclusions = "blurry, low quality, distorted, watermark, logo, signature, jpeg artifacts, pixelated, grainy"
+            
+            if negative_keywords:
+                negative_prompt_base = f"{text_exclusions}, {quality_exclusions}, {negative_keywords}"
+            else:
+                negative_prompt_base = f"{text_exclusions}, {quality_exclusions}"
+            
             keywords_instruction = f"Include these keywords: {keywords}" if keywords else "Use vivid, descriptive language"
             
             system_prompt = f"""You are an expert at creating detailed image prompts for AI image generation.
-Your task is to create exactly {self.image_count} unique image prompts based on the provided script.
+Your task is to create exactly {image_count} unique image prompts based on the provided script.
 
 Requirements:
 1. Each prompt should represent a key scene or moment from the script
@@ -43,19 +72,21 @@ Requirements:
 3. {keywords_instruction}
 4. Make prompts detailed and vivid
 5. Each prompt should be 1-2 sentences
-6. For negative prompts, always include: {negative_prompt_base}
+6. IMPORTANT: Do NOT include any text, letters, words, or writing in the scene descriptions
+7. Focus on visual elements: people, objects, landscapes, atmosphere, lighting, colors
+8. For negative prompts, always include: {negative_prompt_base}
 
 Return ONLY a JSON array with this exact format:
 [
     {{
-        "prompt": "detailed scene description in {style} style",
+        "prompt": "detailed scene description in {style} style, no text, no letters, no words",
         "negative_prompt": "{negative_prompt_base}"
     }},
     ...
 ]
 """
             
-            print(f"Generating {self.image_count} image prompts...")
+            print(f"Generating {image_count} image prompts...")
             
             # Call OpenAI API
             response = self.client.chat.completions.create(
@@ -80,12 +111,12 @@ Return ONLY a JSON array with this exact format:
             prompts = json.loads(json_str)
             
             # Ensure we have exactly the right number of prompts
-            if len(prompts) < self.image_count:
+            if len(prompts) < image_count:
                 # Duplicate some prompts if needed
-                while len(prompts) < self.image_count:
+                while len(prompts) < image_count:
                     prompts.append(prompts[-1])
-            elif len(prompts) > self.image_count:
-                prompts = prompts[:self.image_count]
+            elif len(prompts) > image_count:
+                prompts = prompts[:image_count]
             
             print(f"Generated {len(prompts)} image prompts")
             return prompts
@@ -93,22 +124,25 @@ Return ONLY a JSON array with this exact format:
         except Exception as e:
             print(f"Error generating prompts: {e}")
             # Return default prompts as fallback
-            return self._generate_default_prompts(script, style)
+            return self._generate_default_prompts(script, style, image_count)
     
-    def _generate_default_prompts(self, script: str, style: str) -> List[Dict[str, str]]:
+    def _generate_default_prompts(self, script: str, style: str, image_count: int = None) -> List[Dict[str, str]]:
         """Generate simple default prompts as fallback"""
+        if image_count is None:
+            image_count = self._calculate_image_count(script)
+            
         words = script.split()
-        chunk_size = len(words) // self.image_count
+        chunk_size = max(1, len(words) // image_count)
         
         prompts = []
-        for i in range(self.image_count):
+        for i in range(image_count):
             start = i * chunk_size
-            end = start + chunk_size if i < self.image_count - 1 else len(words)
+            end = start + chunk_size if i < image_count - 1 else len(words)
             chunk = ' '.join(words[start:end])
             
             prompts.append({
-                "prompt": f"{chunk[:100]} in {style} style, high quality, detailed",
-                "negative_prompt": "blurry, low quality, distorted, ugly, bad anatomy"
+                "prompt": f"{chunk[:100]} in {style} style, high quality, detailed, no text, no letters",
+                "negative_prompt": "text, letters, words, writing, typography, captions, subtitles, labels, signs, blurry, low quality, distorted, ugly, bad anatomy, watermark"
             })
         
         return prompts

@@ -15,7 +15,16 @@ ClipForge is an AI-powered video generation system that creates professional vid
 3. **Generate Images** - Create images using DALL-E 3 API
 4. **Combine Media** - Merge images and narration in sequence
 5. **Apply Effects** - Add random zoom and pan effects for cinematic feel
-6. **Save Video** - Add completed video to the videos library
+6. **Add AI Subtitles** - Intelligently segment and add professional subtitles using AI
+7. **Save Video** - Add completed video to the videos library
+
+🎬 **AI-Powered Subtitles:**
+- Intelligent text segmentation using GPT-4
+- Natural speech rhythm matching
+- Professional styling with outlines
+- Smooth fade in/out animations
+- Configurable fonts, colors, and positioning
+- Automatic SRT file export
 
 🎨 **Multiple Video Styles:**
 - Modern Abstract
@@ -134,6 +143,7 @@ video_mike/
 ├── prompt_generator.py       # Image prompt generation
 ├── image_generator.py        # Image generation using DALL-E
 ├── video_composer.py         # Video composition and effects
+├── subtitle_generator.py     # AI-powered subtitle generation
 ├── requirements.txt          # Python dependencies
 ├── setup.ps1                 # Setup script
 ├── .env.example             # Environment variables template
@@ -177,7 +187,28 @@ DEFAULT_FPS=30
 DEFAULT_DURATION_PER_IMAGE=5
 IMAGE_COUNT=7
 MAX_SCRIPT_LENGTH=800
+
+# Subtitle Settings
+ENABLE_SUBTITLES=True
+SUBTITLE_MODEL=gpt-4o-mini
+SUBTITLE_FONT=Arial-Bold
+SUBTITLE_FONT_SIZE_RATIO=0.045
+SUBTITLE_COLOR=white
+SUBTITLE_STROKE_COLOR=black
+SUBTITLE_STROKE_WIDTH=3
+SUBTITLE_BOTTOM_PADDING=0.12
 ```
+
+### Subtitle Configuration Options
+
+- **ENABLE_SUBTITLES**: Toggle subtitles on/off (True/False)
+- **SUBTITLE_MODEL**: AI model for text segmentation (gpt-4o-mini recommended for cost/quality)
+- **SUBTITLE_FONT**: Font family (Arial-Bold, Impact, etc.)
+- **SUBTITLE_FONT_SIZE_RATIO**: Font size as ratio of video height (0.045 = 4.5%)
+- **SUBTITLE_COLOR**: Text color (white, yellow, etc.)
+- **SUBTITLE_STROKE_COLOR**: Outline color for readability (black, navy, etc.)
+- **SUBTITLE_STROKE_WIDTH**: Outline thickness in pixels
+- **SUBTITLE_BOTTOM_PADDING**: Distance from bottom as ratio of height (0.12 = 12%)
 
 ## Troubleshooting
 

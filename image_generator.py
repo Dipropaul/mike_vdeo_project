@@ -89,9 +89,12 @@ class ImageGenerator:
             full_prompt = prompt_dict['prompt']
             negative_prompt = prompt_dict.get('negative_prompt', '')
             
+            # Add explicit "no text" instruction at the start
+            full_prompt = f"Create an image with absolutely NO TEXT, NO LETTERS, NO WORDS, NO WRITING of any kind. {full_prompt}"
+            
             # Incorporate negative keywords into main prompt
             if negative_prompt:
-                full_prompt += f". Avoid: {negative_prompt}"
+                full_prompt += f". Strictly avoid: {negative_prompt}"
             
             # Use Nano Banana (gemini-2.5-flash-image) for fast image generation
             response = self.gemini_client.models.generate_content(
@@ -130,9 +133,18 @@ class ImageGenerator:
     def _generate_with_dalle(self, prompt_dict: Dict[str, str], index: int, size: str) -> Path:
         """Generate image using OpenAI DALL-E"""
         try:
+            # Prepare prompt with explicit no-text instruction
+            prompt = prompt_dict['prompt']
+            negative_prompt = prompt_dict.get('negative_prompt', '')
+            
+            # Enhance prompt to exclude text - DALL-E doesn't support negative prompts
+            enhanced_prompt = f"Create a visual scene with NO TEXT, NO LETTERS, NO WORDS, NO WRITING: {prompt}"
+            if negative_prompt:
+                enhanced_prompt += f". Avoid: {negative_prompt}"
+            
             # Generate image using DALL-E
             response = self.client.images.generate(
-                prompt=prompt_dict['prompt'],
+                prompt=enhanced_prompt[:4000],  # DALL-E has 4000 char limit
                 n=1,
                 size=size,
                 quality="standard",

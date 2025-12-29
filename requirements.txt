@@ -31,3 +31,6 @@ pydantic
 # Utilities
 tqdm
 python-slugify
+
+# Subtitle Dependencies (included in standard library)
+# json, re are built-in Python modules

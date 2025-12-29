@@ -37,6 +37,16 @@ DEFAULT_DURATION_PER_IMAGE = int(os.getenv('DEFAULT_DURATION_PER_IMAGE', 5))
 IMAGE_COUNT = int(os.getenv('IMAGE_COUNT', 7))
 MAX_SCRIPT_LENGTH = int(os.getenv('MAX_SCRIPT_LENGTH', 1500))
 
+# Subtitle Settings
+ENABLE_SUBTITLES = os.getenv('ENABLE_SUBTITLES', 'True') == 'True'
+SUBTITLE_MODEL = os.getenv('SUBTITLE_MODEL', 'gpt-4o-mini')  # AI model for subtitle segmentation
+SUBTITLE_FONT = os.getenv('SUBTITLE_FONT', 'Arial')
+SUBTITLE_FONT_SIZE_RATIO = float(os.getenv('SUBTITLE_FONT_SIZE_RATIO', '0.045'))  # 4.5% of video height
+SUBTITLE_COLOR = os.getenv('SUBTITLE_COLOR', 'white')
+SUBTITLE_STROKE_COLOR = os.getenv('SUBTITLE_STROKE_COLOR', 'black')
+SUBTITLE_STROKE_WIDTH = int(os.getenv('SUBTITLE_STROKE_WIDTH', '3'))
+SUBTITLE_BOTTOM_PADDING = float(os.getenv('SUBTITLE_BOTTOM_PADDING', '0.20'))  # 20% from bottom
+
 # Video Formats
 VIDEO_FORMATS = {
     '9:16': (1080, 1920),  # Vertical (TikTok, Reels)

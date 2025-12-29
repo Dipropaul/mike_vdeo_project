@@ -80,11 +80,11 @@ class VideoGeneratorPipeline:
             print(f"✓ Generated {len(image_paths)} images\n")
             
             # STEP 4 & 5: Combine images and narration with zoom/pan effects
-            print("STEP 4-5: Composing video with effects...")
+            print("STEP 4-5: Composing video with effects and AI subtitles...")
             video_path = self.video_composer.create_video(
                 image_paths, audio_path, video_format, title, script
             )
-            print(f"✓ Video composed successfully\n")
+            print(f"✓ Video composed successfully with AI-powered subtitles\n")
             
             # STEP 6: Save to database
             print("STEP 6: Saving to database...")

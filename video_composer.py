@@ -3,13 +3,15 @@ Video Composer Module
 Combines images and narration into a video with effects
 """
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 import random
 from moviepy import ImageClip, AudioFileClip, concatenate_videoclips, CompositeVideoClip, TextClip
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFont, ImageDraw
 import config
 import textwrap
+import math
+from subtitle_generator import SubtitleGenerator
 
 
 class VideoComposer:
@@ -18,23 +20,29 @@ class VideoComposer:
     def __init__(self):
         """Initialize the video composer"""
         self.fps = config.DEFAULT_FPS
+        self.subtitle_gen = SubtitleGenerator()
     
     def _make_zoom_in_effect(self, duration):
-        """Create zoom in effect function"""
+        """Create smooth zoom in effect function with enhanced easing"""
         def effect(get_frame, t):
             frame = get_frame(t)
             h, w = frame.shape[:2]
             
-            # Calculate zoom factor (1.0 to 1.3)
+            # Calculate zoom factor with smooth easing (1.0 to 1.35) - more dynamic
             progress = t / duration
-            zoom = 1.0 + (progress * 0.3)
+            # Apply quartic ease-in-out for ultra smooth cinematic motion
+            if progress < 0.5:
+                eased_progress = 8 * progress * progress * progress * progress
+            else:
+                eased_progress = 1 - pow(-2 * progress + 2, 4) / 2
+            zoom = 1.0 + (eased_progress * 0.35)  # Increased to 35% for more impact
             
             # Calculate crop coordinates for zoom
             new_h, new_w = int(h / zoom), int(w / zoom)
             y1, x1 = (h - new_h) // 2, (w - new_w) // 2
             y2, x2 = y1 + new_h, x1 + new_w
             
-            # Crop and resize back
+            # Crop and resize back with high quality
             cropped = frame[y1:y2, x1:x2]
             img = Image.fromarray(cropped)
             img_resized = img.resize((w, h), Image.Resampling.LANCZOS)
@@ -42,21 +50,26 @@ class VideoComposer:
         return effect
     
     def _make_zoom_out_effect(self, duration):
-        """Create zoom out effect function"""
+        """Create smooth zoom out effect function with enhanced easing"""
         def effect(get_frame, t):
             frame = get_frame(t)
             h, w = frame.shape[:2]
             
-            # Calculate zoom factor (1.3 to 1.0)
+            # Calculate zoom factor (1.35 to 1.0) with smooth easing - more dynamic
             progress = t / duration
-            zoom = 1.3 - (progress * 0.3)
+            # Apply quartic ease-in-out for ultra smooth cinematic motion
+            if progress < 0.5:
+                eased_progress = 8 * progress * progress * progress * progress
+            else:
+                eased_progress = 1 - pow(-2 * progress + 2, 4) / 2
+            zoom = 1.35 - (eased_progress * 0.35)  # Increased to 35% for more impact
             
             # Calculate crop coordinates for zoom
             new_h, new_w = int(h / zoom), int(w / zoom)
             y1, x1 = (h - new_h) // 2, (w - new_w) // 2
             y2, x2 = y1 + new_h, x1 + new_w
             
-            # Crop and resize back
+            # Crop and resize back with high quality
             cropped = frame[y1:y2, x1:x2]
             img = Image.fromarray(cropped)
             img_resized = img.resize((w, h), Image.Resampling.LANCZOS)
@@ -64,26 +77,80 @@ class VideoComposer:
         return effect
     
     def _make_pan_effect(self, duration):
-        """Create pan effect function"""
+        """Create smooth diagonal pan effect function with enhanced motion"""
         def effect(get_frame, t):
             frame = get_frame(t)
             h, w = frame.shape[:2]
             
-            # Pan horizontally
+            # Diagonal pan with quartic easing - ultra smooth cinematic motion
             progress = t / duration
-            shift = int(w * 0.1 * (progress - 0.5))
-            
-            if shift > 0:
-                # Pan right
-                frame = np.pad(frame, ((0, 0), (shift, 0), (0, 0)), mode='edge')[:, :w]
+            # Apply quartic ease-in-out
+            if progress < 0.5:
+                eased_progress = 8 * progress * progress * progress * progress
             else:
-                # Pan left
-                frame = np.pad(frame, ((0, 0), (0, -shift), (0, 0)), mode='edge')[:, -w:]
+                eased_progress = 1 - pow(-2 * progress + 2, 4) / 2
+            
+            # Horizontal shift (increased to 18%)
+            h_shift = int(w * 0.18 * (eased_progress - 0.5))
+            # Vertical shift for diagonal effect (8%)
+            v_shift = int(h * 0.08 * (eased_progress - 0.5))
+            
+            # Apply horizontal pan
+            if h_shift > 0:
+                frame = np.pad(frame, ((0, 0), (h_shift, 0), (0, 0)), mode='edge')[:, :w]
+            elif h_shift < 0:
+                frame = np.pad(frame, ((0, 0), (0, -h_shift), (0, 0)), mode='edge')[:, -w:]
+            
+            # Apply vertical pan
+            if v_shift > 0:
+                frame = np.pad(frame, ((v_shift, 0), (0, 0), (0, 0)), mode='edge')[:h, :]
+            elif v_shift < 0:
+                frame = np.pad(frame, ((0, -v_shift), (0, 0), (0, 0)), mode='edge')[-h:, :]
             
             return frame
         return effect
+    
+    def _make_rotate_zoom_effect(self, duration):
+        """Create smooth rotate + zoom effect for cinematic feel"""
+        def effect(get_frame, t):
+            frame = get_frame(t)
+            h, w = frame.shape[:2]
+            
+            # Progress with quartic easing
+            progress = t / duration
+            if progress < 0.5:
+                eased = 8 * progress * progress * progress * progress
+            else:
+                eased = 1 - pow(-2 * progress + 2, 4) / 2
+            
+            # Subtle rotation (-2° to +2°) + zoom (1.0 to 1.25)
+            angle = (eased - 0.5) * 4  # -2 to +2 degrees
+            zoom = 1.0 + (eased * 0.25)
+            
+            # Use PIL for rotation and zoom
+            img = Image.fromarray(frame)
+            
+            # Calculate new dimensions after zoom
+            new_w, new_h = int(w * zoom), int(h * zoom)
+            
+            # Zoom first
+            img_zoomed = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+            
+            # Rotate with expand to prevent cropping
+            img_rotated = img_zoomed.rotate(angle, resample=Image.Resampling.BICUBIC, expand=False, fillcolor=(0, 0, 0))
+            
+            # Crop back to original size (center crop)
+            left = (img_rotated.width - w) // 2
+            top = (img_rotated.height - h) // 2
+            img_cropped = img_rotated.crop((left, top, left + w, top + h))
+            
+            return np.array(img_cropped)
+        return effect
+    
+    def __init__(self):
         """Initialize the video composer"""
         self.fps = config.DEFAULT_FPS
+        self.subtitle_gen = SubtitleGenerator()
     
     def create_video(self, image_paths: List[Path], audio_path: Path,
                      video_format: str = '16:9', 
@@ -152,14 +219,14 @@ class VideoComposer:
                 
                 clips.append(clip)
             
-            # Concatenate all clips
+            # Concatenate all clips with smooth transitions
             print("Combining clips...")
             final_video = concatenate_videoclips(clips, method="compose")
             
-            # Add subtitles if script is provided
-            if script:
-                print("Adding subtitles...")
-                final_video = self._add_subtitles(final_video, script, width, height, total_duration)
+            # Add AI-powered subtitles
+            if script and config.ENABLE_SUBTITLES:
+                print("Generating AI-powered subtitles...")
+                final_video = self._add_ai_subtitles(final_video, script, width, height, total_duration, len(image_paths))
             
             # Set audio - use with_audio instead of set_audio for MoviePy 2.x
             try:
@@ -246,16 +313,30 @@ class VideoComposer:
             # Apply crop
             cropped = clip.image_transform(crop_frame)
             
-            # Apply random animation effect for reels
+            # Apply random animation effect for reels with varied intensity
             effect_functions = [
                 self._make_zoom_in_effect(duration),
                 self._make_zoom_out_effect(duration),
-                self._make_pan_effect(duration)
+                self._make_pan_effect(duration),
+                self._make_rotate_zoom_effect(duration),
+                # Add zoom in twice for higher probability of zoom effects
+                self._make_zoom_in_effect(duration),
             ]
             effect = random.choice(effect_functions)
             
+            # Apply slight speed variation (0.95x to 1.05x) for organic feel
+            speed_factor = random.uniform(0.95, 1.05)
+            
             # Apply the effect using transform
             animated_clip = cropped.transform(effect)
+            
+            # Apply speed variation
+            try:
+                if speed_factor != 1.0:
+                    animated_clip = animated_clip.with_fps(self.fps * speed_factor)
+            except:
+                pass  # Skip speed variation if it fails
+            
             return animated_clip
             
         except Exception as e:
@@ -268,84 +349,146 @@ class VideoComposer:
                 print(f"Crop also failed: {e2}, returning original clip")
                 return clip
     
-    def _add_subtitles(self, video_clip, script: str, width: int, height: int, duration: float):
+    def _add_ai_subtitles(self, video_clip, script: str, width: int, 
+                          height: int, duration: float, num_images: int):
         """
-        Add animated subtitles to video
+        Add AI-generated subtitles to video with professional styling
         
         Args:
             video_clip: The video clip to add subtitles to
-            script: Full script text
+            script: The video script
             width: Video width
             height: Video height
             duration: Video duration
+            num_images: Number of images/scenes
             
         Returns:
             Video clip with subtitles
         """
         try:
-            # Split script into words for dynamic display
-            words = script.split()
-            words_per_second = len(words) / duration
+            # Generate subtitle segments using AI
+            subtitle_segments = self.subtitle_gen.generate_subtitle_segments(
+                script, duration, num_images
+            )
             
-            # Calculate optimal words per subtitle chunk (3-5 words)
-            words_per_chunk = max(3, min(5, int(words_per_second * 2)))
+            if not subtitle_segments:
+                print("No subtitle segments generated")
+                return video_clip
             
-            # Create subtitle chunks
+            # Export SRT file for reference
+            srt_path = config.TEMP_DIR / "subtitles.srt"
+            self.subtitle_gen.export_srt(subtitle_segments, str(srt_path))
+            
+            # Create subtitle clips with professional styling
             subtitle_clips = []
-            chunk_duration = duration / (len(words) / words_per_chunk)
             
-            for i in range(0, len(words), words_per_chunk):
-                chunk_words = words[i:i + words_per_chunk]
-                text = ' '.join(chunk_words)
+            for segment in subtitle_segments:
+                text = segment['text']
+                start_time = segment['start_time']
+                end_time = segment['end_time']
+                duration_seg = end_time - start_time
                 
-                # Wrap text if too long (use proper newline character)
-                wrapped_text = '\n'.join(textwrap.wrap(text, width=35))
-                
-                # Calculate timing
-                start_time = (i / words_per_chunk) * chunk_duration
-                end_time = min(start_time + chunk_duration, duration)
-                
-                # Create text clip with styling for social media
-                try:
-                    # Calculate font size based on video dimensions (smaller for better fit)
-                    font_size = int(height * 0.045)  # 4.5% of video height
-                    
-                    txt_clip = TextClip(
-                        text=wrapped_text,
-                        font_size=font_size,
-                        color='white',
-                        stroke_color='black',
-                        stroke_width=3,
-                        method='caption',
-                        size=(int(width * 0.85), None)  # 85% of video width for margins
-                    ).with_start(start_time).with_duration(end_time - start_time)
-                    
-                    # Position at bottom with safe margin to prevent cutoff
-                    # For 9:16 vertical videos, position slightly higher
-                    # For 16:9 horizontal videos, keep at bottom
-                    if height > width:  # Vertical video (9:16)
-                        y_position = int(height * 0.70)  # 70% down
-                    else:  # Horizontal or square video
-                        y_position = int(height * 0.80)  # 80% down
-                    
-                    position = ('center', y_position)
-                    txt_clip = txt_clip.with_position(position)
-                    
-                    subtitle_clips.append(txt_clip)
-                except Exception as e:
-                    print(f"Warning: Could not create subtitle clip: {e}")
+                if duration_seg <= 0:
                     continue
+                
+                # Create subtitle clip with enhanced styling
+                txt_clip = self._create_styled_subtitle(
+                    text, width, height, duration_seg, start_time
+                )
+                
+                if txt_clip:
+                    subtitle_clips.append(txt_clip)
             
-            # Composite video with all subtitle clips
+            # Composite subtitles onto video
             if subtitle_clips:
-                final_clip = CompositeVideoClip([video_clip] + subtitle_clips)
-                return final_clip
+                print(f"Adding {len(subtitle_clips)} subtitle segments to video...")
+                video_with_subs = CompositeVideoClip([video_clip] + subtitle_clips)
+                return video_with_subs
             else:
+                print("No subtitle clips were created successfully, proceeding without subtitles...")
                 return video_clip
                 
         except Exception as e:
-            print(f"Error adding subtitles: {e}, returning video without subtitles")
+            print(f"Error adding AI subtitles: {e}")
+            import traceback
+            traceback.print_exc()
             return video_clip
+    
+    def _create_styled_subtitle(self, text: str, video_width: int, 
+                                video_height: int, duration: float, 
+                                start_time: float):
+        """
+        Create a professionally styled subtitle clip
+        
+        Args:
+            text: Subtitle text
+            video_width: Video width
+            video_height: Video height
+            duration: Subtitle duration
+            start_time: When subtitle appears
+            
+        Returns:
+            Styled TextClip or None
+        """
+        try:
+            # Calculate font size based on video height
+            font_size = int(video_height * config.SUBTITLE_FONT_SIZE_RATIO)
+            
+            # Wrap text to fit screen width (80% of width)
+            max_chars_per_line = int(video_width * 0.8 / (font_size * 0.6))
+            wrapped_text = textwrap.fill(text, width=max_chars_per_line)
+            
+            # Try creating text clip with label method (more compatible)
+            try:
+                txt_clip = TextClip(
+                    text=wrapped_text,
+                    font_size=font_size,
+                    color=config.SUBTITLE_COLOR,
+                    stroke_color=config.SUBTITLE_STROKE_COLOR,
+                    stroke_width=config.SUBTITLE_STROKE_WIDTH,
+                    method='label',
+                    size=(int(video_width * 0.9), None)
+                )
+            except Exception as e1:
+                print(f"Label method failed: {e1}, trying caption method...")
+                # Fallback to caption without font specification
+                try:
+                    txt_clip = TextClip(
+                        text=wrapped_text,
+                        font_size=font_size,
+                        color=config.SUBTITLE_COLOR,
+                        method='caption',
+                        size=(int(video_width * 0.9), None),
+                        text_align='center'
+                    )
+                except Exception as e2:
+                    print(f"Caption method failed: {e2}")
+                    return None
+            
+            if txt_clip is None:
+                return None
+            
+            # Set duration and start time
+            txt_clip = txt_clip.with_duration(duration).with_start(start_time)
+            
+            # Position subtitle at bottom with padding (ensure it's visible)
+            padding_pixels = int(video_height * config.SUBTITLE_BOTTOM_PADDING)
+            y_position = max(video_height - txt_clip.size[1] - padding_pixels, int(video_height * 0.6))
+            txt_clip = txt_clip.with_position(('center', y_position))
+            
+            # Add fade in/out effects for smooth appearance (if available)
+            fade_duration = min(0.3, duration / 4)
+            try:
+                txt_clip = txt_clip.fadein(fade_duration).fadeout(fade_duration)
+            except AttributeError:
+                # Fade methods not available, skip fade effects
+                pass
+            
+            return txt_clip
+            
+        except Exception as e:
+            print(f"Error creating subtitle clip: {e}")
+            return None
 
 
 if __name__ == "__main__":
