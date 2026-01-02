@@ -471,9 +471,16 @@ class VideoComposer:
             # Set duration and start time
             txt_clip = txt_clip.with_duration(duration).with_start(start_time)
             
-            # Position subtitle at bottom with padding (ensure it's visible)
+            # Position subtitle ensuring it stays within visible area with extra spacing
             padding_pixels = int(video_height * config.SUBTITLE_BOTTOM_PADDING)
-            y_position = max(video_height - txt_clip.size[1] - padding_pixels, int(video_height * 0.6))
+            y_position = video_height - txt_clip.size[1] - padding_pixels
+            
+            # Ensure subtitle doesn't get cut off at bottom and doesn't go too high
+            min_y = int(video_height * 0.35)  # Don't go above 35% of screen
+            min_bottom_space = int(video_height * 0.08)  # Minimum 8% blank space from bottom
+            max_y = video_height - txt_clip.size[1] - min_bottom_space
+            
+            y_position = max(min_y, min(y_position, max_y))
             txt_clip = txt_clip.with_position(('center', y_position))
             
             # Add fade in/out effects for smooth appearance (if available)

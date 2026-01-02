@@ -45,7 +45,7 @@ SUBTITLE_FONT_SIZE_RATIO = float(os.getenv('SUBTITLE_FONT_SIZE_RATIO', '0.045'))
 SUBTITLE_COLOR = os.getenv('SUBTITLE_COLOR', 'white')
 SUBTITLE_STROKE_COLOR = os.getenv('SUBTITLE_STROKE_COLOR', 'black')
 SUBTITLE_STROKE_WIDTH = int(os.getenv('SUBTITLE_STROKE_WIDTH', '3'))
-SUBTITLE_BOTTOM_PADDING = float(os.getenv('SUBTITLE_BOTTOM_PADDING', '0.20'))  # 20% from bottom
+SUBTITLE_BOTTOM_PADDING = float(os.getenv('SUBTITLE_BOTTOM_PADDING', '0.15'))  # 15% from bottom
 
 # Video Formats
 VIDEO_FORMATS = {

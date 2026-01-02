@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ValidationError
 from pathlib import Path
 import config
@@ -16,6 +17,27 @@ import threading
 from typing import Optional
 
 app = FastAPI(title="ClipForge", description="AI Video Generation System", version="1.0.0")
+
+# Configure CORS for frontend integration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:*",
+        "http://127.0.0.1:*",
+        "http://0.0.0.0:*",
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:5173",
+        "http://localhost:8080",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8080",
+        "*"  # Allow all for development
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
+)
 
 # Custom exception handler for validation errors
 @app.exception_handler(RequestValidationError)
@@ -208,13 +230,98 @@ async def download_video(video_id: int):
 
 @app.get('/api/config')
 async def get_config():
-    """Get application configuration"""
+    """
+    Get Application Configuration
+    
+    Returns all available options for video generation including:
+    - Video formats (9:16, 16:9, 1:1)
+    - Video styles (art styles for image generation)
+    - Voice types (available AI voices)
+    - Configuration limits
+    """
     return JSONResponse(content={
         'video_formats': list(config.VIDEO_FORMATS.keys()),
         'video_styles': config.VIDEO_STYLES,
         'voice_types': list(config.VOICE_TYPES.keys()),
         'max_script_length': config.MAX_SCRIPT_LENGTH,
         'image_count': config.IMAGE_COUNT
+    })
+
+
+@app.get('/api/styles', 
+    summary="Get Available Video Styles",
+    description="Returns a list of all available video styles for image generation",
+    response_description="List of style names",
+    tags=["Configuration"]
+)
+async def get_styles():
+    """
+    Get Available Video Styles
+    
+    Returns all available art styles that can be used for video generation.
+    These styles determine the visual appearance of generated images.
+    
+    **Returns:**
+    - List of style names (e.g., "Realistic Action Art", "Modern Abstract", etc.)
+    """
+    return JSONResponse(content={
+        'styles': config.VIDEO_STYLES,
+        'count': len(config.VIDEO_STYLES)
+    })
+
+
+@app.get('/api/voices',
+    summary="Get Available AI Voices",
+    description="Returns a list of all available AI voices for narration",
+    response_description="Dictionary of voice names and their IDs",
+    tags=["Configuration"]
+)
+async def get_voices():
+    """
+    Get Available AI Voices
+    
+    Returns all available AI voices that can be used for video narration.
+    Includes both ElevenLabs voice IDs and OpenAI TTS fallback voices.
+    
+    **Voice Types:**
+    - Male voices: Roger, Charlie, George, James, Callum, etc.
+    - Female voices: Sarah, Laura, Jessica, Matilda, Alice, etc.
+    - Neutral voices: River
+    
+    **Returns:**
+    - Dictionary with voice names as keys and ElevenLabs voice IDs as values
+    - Total count of available voices
+    """
+    return JSONResponse(content={
+        'voices': list(config.VOICE_TYPES.keys()),
+        'voice_details': config.VOICE_TYPES,
+        'count': len(config.VOICE_TYPES)
+    })
+
+
+@app.get('/api/formats',
+    summary="Get Available Video Formats",
+    description="Returns all supported video aspect ratios",
+    response_description="Dictionary of format names and dimensions",
+    tags=["Configuration"]
+)
+async def get_formats():
+    """
+    Get Available Video Formats
+    
+    Returns all supported video aspect ratios and their dimensions.
+    
+    **Available Formats:**
+    - 9:16 (1080x1920) - Vertical format for TikTok, Instagram Reels, YouTube Shorts
+    - 16:9 (1920x1080) - Horizontal format for YouTube, traditional videos
+    - 1:1 (1080x1080) - Square format for Instagram posts, Facebook
+    
+    **Returns:**
+    - Dictionary with format names as keys and (width, height) tuples as values
+    """
+    return JSONResponse(content={
+        'formats': {k: {'width': v[0], 'height': v[1]} for k, v in config.VIDEO_FORMATS.items()},
+        'count': len(config.VIDEO_FORMATS)
     })
 
 
