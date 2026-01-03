@@ -2,9 +2,48 @@
 
 ![ClipForge](https://img.shields.io/badge/AI-Video%20Generation-purple)
 ![Python](https://img.shields.io/badge/Python-3.8+-blue)
-![Flask](https://img.shields.io/badge/Flask-3.0-green)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green)
 
 ClipForge is an AI-powered video generation system that creates professional videos from text scripts using AI narration, AI-generated images, and automated video composition with cinematic effects.
+
+## 🆕 Queue System (NEW!)
+
+**Multiple users can now submit video generation requests simultaneously!**
+
+- ✅ **Job Queue** - Submit multiple video requests
+- ✅ **Background Processing** - Dedicated worker processes videos
+- ✅ **Real-time Progress** - Track job status and queue position
+- ✅ **Persistent Jobs** - Survives restarts
+- ✅ **Windows Compatible** - Fixed Python 3.13 asyncio issues
+
+## Quick Start
+
+### Easy Start (Windows)
+```bash
+start.bat
+```
+
+### Easy Start (Linux/Mac)
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+This opens two terminals:
+1. **API Server** - Accepts video requests (http://localhost:5000)
+2. **Worker** - Processes videos in background
+
+### Manual Start
+
+**Terminal 1 - API Server:**
+```bash
+python app.py
+```
+
+**Terminal 2 - Worker:**
+```bash
+python worker.py
+```
 
 ## Features
 
